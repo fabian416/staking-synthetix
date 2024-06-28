@@ -3,9 +3,10 @@ pragma solidity >=0.8.2 <0.9.0;
 
 import "lib/forge-std/src/interfaces/IERC20.sol";
 
-contract Staking {
-    IERC20 public  stakeToken;
-    IERC20 public  rewardToken;
+contract StakingPulgaV2  {
+
+    IERC20 public  immutable stakeToken;
+    IERC20 public immutable rewardToken;
     uint256 public immutable totalRewards;
     uint256 public rewardRate;
     uint256 public lastUpdateBlock;
@@ -27,11 +28,13 @@ contract Staking {
     }
     
     constructor (
+        address _stakeTokenAddress,
         address _rewardTokenAddress
     ){
+        stakeToken = IERC20(_stakeTokenAddress);
         rewardToken = IERC20(_rewardTokenAddress);
         lastUpdateBlock = block.number;
-        totalRewards = 2_500_000_000 * 10e18;
+        totalRewards = 2_500_000_000 * 10**18;
         rewardRate = totalRewards / 691200; // represent rewardRate per block that would be 3616.89814815
         endWindowStake = block.timestamp + 30 days; // Staking window of 30 days
 
@@ -51,7 +54,7 @@ contract Staking {
             return rewardPerTokenStored;
         }
         return rewardPerTokenStored + 
-        (block.number - lastUpdateBlock) * rewardRate * 1e18
+        (block.number - lastUpdateBlock) * rewardRate * 10**18
         / totalStaked;
     }
     
@@ -65,6 +68,7 @@ contract Staking {
 
         emit TokensStaked(msg.sender, _amount);
     }
+
     function withdraw(uint256 _amount) public {
         Staker storage staker = stakers[msg.sender];
         require(block.timestamp >= staker.lastStakedTime +  LOCK_PERIOD, "LOCK_PERIOD_NOT_FINISHED_YET");
@@ -81,7 +85,7 @@ contract Staking {
 
     function earned(address _account) public view returns (uint256) {
         return stakers[_account].amount * (rewardPerToken() - stakers[_account].rewardDebt) /
-        1e18;
+        10**18;
     }
 
     function getReward() public updateReward(msg.sender) {
